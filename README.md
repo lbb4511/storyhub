@@ -11,3 +11,9 @@ python manage.py createsuperuser
 
 python manage.py runserver
 ```
+
+Docker
+
+```
+docker run --name StoryHub -p 8000:8000 -d lbb4511/storyhub
+```
