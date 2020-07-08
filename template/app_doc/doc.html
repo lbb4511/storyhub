@@ -1,0 +1,116 @@
+<!-- 继承自模板：app_doc/docs_base.html -->
+{% extends 'app_doc/docs_base.html' %}
+<!-- 引入静态文件 -->
+{% load staticfiles %}
+
+{% block keyword %}{{ doc.name }},{{ project.name }},{% endblock %}
+{% block description %}{{doc.pre_content | slice:"0:100"}}{% endblock %}
+{% block title %}{{ doc.name }} - {{ project.name }}{% endblock %}
+
+{% block head_toolbar %}
+    {% if request.user == doc.create_user %}
+        <span class="btn pull-left">|</span>
+        <a class="btn pull-left" aria-label="" href="{% url 'modify_doc' doc_id=doc.id %}">
+            <i class="fa fa-edit"></i> <span class="layui-hide-xs">修改</span>
+        </a>
+        <a class="btn pull-left" aria-label="" href="{% url 'create_doc' %}?pid={{project.id}}" target="_blank">
+            <i class="fa fa-plus-square"></i> <span class="layui-hide-xs">添加</span>
+        </a>
+        <a class="btn pull-left" aria-label="" href="{% url 'manage_doc' %}" target="_blank">
+            <i class="fa fa-cubes"></i> <span class="layui-hide-xs">管理</span>
+        </a>
+    {% elif colla_user > 0 %}
+        <span class="btn pull-left">|</span>
+        {% if colla_user_role == 1 %}
+        <a class="btn pull-left" aria-label="" href="{% url 'modify_doc' doc_id=doc.id %}">
+            <i class="fa fa-edit"></i> <span class="layui-hide-xs">修改</span>
+        </a>
+        {% endif %}
+        <a class="btn pull-left" aria-label="" href="{% url 'create_doc' %}?pid={{project.id}}" target="_blank">
+            <i class="fa fa-plus-square"></i> <span class="layui-hide-xs">添加</span>
+        </a>
+    {% endif %}
+    <!-- 文档目录 -->
+    <div id="toc-container" style="display:none;padding:10px;overflow:auto;"></div>
+{% endblock %}
+
+{% block content_head %}
+    <h1>{{ doc.name }}</h1><hr>
+
+    <p style="" class="project-doc-content-head">
+        <i class="fa fa-user"></i> 作者：{{ doc.create_user.username }}
+    &nbsp;&nbsp;&nbsp;&nbsp;<i class="fa fa-edit"></i> 最后修改于：{{ doc.modify_time }}
+    </p>
+
+{% endblock %}
+
+{% block page_content %}
+    {# {{ doc.content | safe }} #}
+    <textarea style="display: none;">{{ doc.pre_content }}</textarea>
+
+{% endblock %}
+
+{% block doc_previous_next %}
+    {% load doc_filter %}
+    <div class="layui-row" style="margin-top: 10px;padding:10px;display:flex;justify-content:space-around;border-top: 1px #e6e6e6 solid;">
+        <hr>
+        <div>
+            {% if doc.id|get_doc_previous == None %}
+                <button class="layui-btn layui-btn-disabled layui-btn-sm layui-btn-radius"><i class="layui-icon layui-icon-prev "></i>上一篇</button>
+            {% else %}
+                <a href="{% url 'doc' doc.top_doc doc.id|get_doc_previous %}" class="layui-btn layui-btn-primary layui-btn-sm layui-btn-radius"><i class="layui-icon layui-icon-prev "></i>上一篇</a>
+            {% endif %}
+        </div>
+        <div>
+            {% if doc.id|get_doc_next == None %}
+                <button class="layui-btn layui-btn-disabled layui-btn-sm layui-btn-radius">下一篇<i class="layui-icon layui-icon-next"></i></button>
+            {% else %}
+                <a href="{% url 'doc' doc.top_doc doc.id|get_doc_next %}" class="layui-btn layui-btn-primary layui-btn-sm layui-btn-radius">下一篇<i class="layui-icon layui-icon-next"></i></a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block custom_script %}
+<script src="{% static 'viewerjs/viewer.js' %}"></script>
+<script>
+    var layer = layui.layer;
+    //初始化悬浮目录
+    var toc = $("#toc-container").find('li');
+    if(toc.length > 0){
+        var toc_index = layer.open({
+             title: '目录',
+             type:1,
+             offset:'r',//坐标
+             maxmin:true, //最大最小化
+             area: ['170px','0.8'],
+             shade: 0,
+             content: $("#toc-container"),
+        });
+    };
+    // 手机屏幕上默认最小化目录
+    if(window.outerWidth < 768){
+        console.log('最小化目录');
+        setTimeout(function(){
+            layer.min(toc_index);
+        },500)
+    }
+    //修改a标签链接新窗口打开
+    $('#content').on('click','a',function(e){
+        e.target.target = '_blank';
+    });
+    // 图片放大显示
+    var img_options = {
+        url: 'data-original',
+        fullscreen:false,//全屏
+        rotatable:false,//旋转
+        scalable:false,//翻转
+        button:false,//关闭按钮
+        toolbar:false,
+        title:false,
+      };
+    var viewer = new Viewer(document.getElementById('content'), img_options);
+</script>
+
+
+{% endblock %}
